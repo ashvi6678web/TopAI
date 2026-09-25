@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TopAI - Owner by Ashish</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{font-family:Poppins,sans-serif}</style>
+</head>
+<body class="bg-[#0a0a0a] text-white min-h-screen">
+<!-- Header -->
+<div class="flex justify-between items-center p-4 bg-[#151515] border-b border-gray-800">
+<h1 class="text-xl font-bold text-green-400">TopAI</h1>
+<span class="text-xs bg-white text-black px-3 py-1 rounded-full font-semibold">Owner by Ashish</span>
+</div>
+
+<div class="max-w-3xl mx-auto p-4">
+<!-- Setup Box - API Key ek baar dalni hai -->
+<div id="setupBox" class="bg-[#1a1a1a] p-6 rounded-2xl mt-6">
+<h2 class="font-bold text-lg">🔑 Setup (1 baar)</h2>
+<p class="text-sm text-gray-400 mt-2">Apni free Gemini API Key yahan daal. Ye sirf tere phone/browser me save hogi, GitHub pe nahi jayegi.</p>
+<input id="apiKey" type="password" placeholder="API Key paste karo" class="w-full mt-3 p-3 rounded-lg bg-black border border-gray-700 text-white">
+<a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-green-400 underline">Key kahan se milegi? Yahan click kar</a>
+<br><button onclick="saveKey()" class="w-full mt-4 bg-green-500 text-black font-bold p-3 rounded-lg">Save & Start TopAI</button>
+</div>
+
+<!-- Main App -->
+<div id="mainApp" class="hidden">
+<!-- Controls -->
+<div class="grid grid-cols-3 gap-2 mt-4">
+<select id="board" class="bg-[#1a1a1a] p-2 rounded-lg text-sm"><option>CBSE</option><option>UP Board</option><option>ICSE</option><option>All Boards</option></select>
+<select id="class" class="bg-[#1a1a1a] p-2 rounded-lg text-sm"><option>Class 9</option><option>Class 10</option><option>Class 11</option><option>Class 12</option></select>
+<select id="lang" class="bg-[#1a1a1a] p-2 rounded-lg text-sm"><option value="Hindi">Hindi</option><option value="English">English</option></select>
+</div>
+
+<!-- Chat Box -->
+<div id="chat" class="bg-[#121212] h-[55vh] overflow-y-auto mt-4 p-4 rounded-2xl border border-gray-800"></div>
+
+<!-- Input Area -->
+<div class="mt-3 bg-[#1a1a1a] p-3 rounded-2xl">
+<div id="imgPreview" class="hidden mb-2"><img id="prevImg" class="h-20 rounded-lg"><button onclick="clearImg()" class="text-xs text-red-400 ml-2">Remove</button></div>
+<div class="flex gap-2">
+<input type="file" id="imgInput" accept="image/*" class="hidden" onchange="handleImg(this)">
+<button onclick="document.getElementById('imgInput').click()" class="bg-gray-800 p-3 rounded-xl">📷</button>
+<button onclick="startVoice()" id="voiceBtn" class="bg-gray-800 p-3 rounded-xl">🎙️</button>
+<input id="qInput" placeholder="Chapter ki photo bhejo ya sawal likho..." class="flex-1 bg-black p-3 rounded-xl border border-gray-700 text-sm">
+<button onclick="ask()" class="bg-green-500 text-black font-bold px-5 rounded-xl">➤</button>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+let apiKey=localStorage.getItem('topai_key');
+let base64Img=null;
+if(apiKey){document.getElementById('setupBox').classList.add('hidden');document.getElementById('mainApp').classList.remove('hidden'); addMsg('bot','Namaste Ashish! 🙏 Main TopAI hu. Class, Board select karo, fir chapter ki photo bhejo ya sawal pucho. Main baccho jaise easy samjhaunga taki 85+ pakka aaye.')}
+
+function saveKey(){
+ const k=document.getElementById('apiKey').value.trim();
+ if(!k) return alert('Key daal bhai');
+ localStorage.setItem('topai_key',k); location.reload();
+}
+function addMsg(who,text){
+ const c=document.getElementById('chat');
+ const d=document.createElement('div');
+ d.className=who=='user'?'bg-green-600 text-black p-3 rounded-xl ml-10 mt-3 text-sm':'bg-[#222] p-3 rounded-xl mr-10 mt-3 text-sm border border-gray-700';
+ d.innerHTML=text.replace(/\n/g,'<br>');
+ c.appendChild(d); c.scrollTop=c.scrollHeight;
+ if(who=='bot' && 'speechSynthesis' in window){
+   let ut=new SpeechSynthesisUtterance(text.replace(/[*#]/g,'').slice(0,300));
+   ut.lang=document.getElementById('lang').value=='Hindi'?'hi-IN':'en-IN';
+   speechSynthesis.speak(ut);
+ }
+}
+function handleImg(input){
+ const file=input.files[0]; if(!file) return;
+ const r=new FileReader();
+ r.onload=e=>{
+   base64Img=e.target.result.split(',')[1];
+   document.getElementById('prevImg').src=e.target.result;
+   document.getElementById('imgPreview').classList.remove('hidden');
+ };
+ r.readAsDataURL(file);
+}
+function clearImg(){base64Img=null;document.getElementById('imgPreview').classList.add('hidden')}
+function startVoice(){
+ const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SpeechRecognition) return alert('Voice is phone me support nahi hai, Chrome use kar');
+ const rec=new SpeechRecognition(); rec.lang=document.getElementById('lang').value=='Hindi'?'hi-IN':'en-IN';
+ rec.start(); document.getElementById('voiceBtn').innerText='🔴';
+ rec.onresult=e=>{document.getElementById('qInput').value=e.results[0][0].transcript; document.getElementById('voiceBtn').innerText='🎙️'};
+}
+
+async function ask(){
+ const q=document.getElementById('qInput').value.trim();
+ if(!q &&!base64Img) return;
+ addMsg('user', q + (base64Img?' [Image Attached]':''));
+ document.getElementById('qInput').value='';
+ const board=document.getElementById('board').value, cls=document.getElementById('class').value, lang=document.getElementById('lang').value;
+ const systemPrompt = `You are TopAI, created by Ashish (17, from UP). Owner by Ashish. You are best teacher for Class ${cls}, ${board}.
+ Language: ${lang}. Explain like a 10-year old kid can understand, super easy, memorable, with tricks. Never forget.
+ Goal: Help student get 85%+ in 1 month. Always give exam-oriented answer.
+ If image is given: 1) Explain chapter from image simply 2) Extract 5-7 MOST IMPORTANT QUESTIONS that have 75% chance to come in exam (mark them as 🔥 Important). 3) Give easy answers + numericals step-by-step.
+ If user asks numerical, solve step-by-step with formula, shortcut, and why.
+ Always be friendly, motivational, like elder brother Ashish.
+ Always mention you are TopAI by Ashish.
+`;
+
+ let parts=[{text: systemPrompt + "\n\n Student Question: " + q}];
+ if(base64Img) parts.push({inline_data:{mime_type:"image/jpeg", data:base64Img}});
+
+ addMsg('bot','Soch raha hu... ⏳');
+ try{
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${localStorage.getItem('topai_key')}`,{
+   method:'POST', headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({contents:[{parts}]})
+  });
+  const data=await res.json();
+  const ans=data.candidates?.[0]?.content?.parts?.[0]?.text || 'Key galat hai ya limit khatam. aistudio.google.com se nayi key bana ke dobara save kar.';
+  document.getElementById('chat').lastChild.remove();
+  addMsg('bot',ans);
+  clearImg();
+ }catch(e){document.getElementById('chat').lastChild.remove(); addMsg('bot','Internet slow hai ya Key galat. Ek baar key check kar le bhai.')}
+}
+</script>
+</body>
+  </html>
