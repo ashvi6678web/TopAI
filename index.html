@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TopAI - Owner Ashish - 9-12 Study AI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>body{background:#212121;color:white} #chat::-webkit-scrollbar{width:0}</style>
+</head>
+<body class="h-screen flex flex-col">
+
+<div class="p-3 flex justify-between items-center border-b border-white/10">
+<div><b class="text-xl">TopAI</b> <span class="text-[11px] bg-white text-black px-3 py-1 rounded-full ml-2">Owner by Ashish • UP</span></div>
+<button onclick="clearChat()" class="text-xs bg-[#2f2f2f] px-3 py-1.5 rounded-full">+ New Chat</button>
+</div>
+
+<div id="chat" class="flex-1 overflow-y-auto p-4 max-w-3xl w-full mx-auto">
+<div id="welcome" class="mt-10 text-center">
+<div class="w-16 h-16 bg-white rounded-full mx-auto flex items-center justify-center"><i class="fa-solid fa-graduation-cap text-black text-2xl"></i></div>
+<h1 class="text-3xl font-bold mt-4">TopAI - 9 to 12 ka Toppers AI</h1>
+<p class="text-gray-400 text-sm mt-2">UP Board • CBSE • All Boards • Hindi + English</p>
+<p class="text-[13px] mt-4 bg-[#2f2f2f] p-3 rounded-xl">Photo bhejo chapter ki → Main 75% aane wale Important Q nikal dunga + 85%+ lane ka tarika bataunga.</p>
+<div class="grid grid-cols-2 gap-2 mt-6 text-left">
+<button onclick="ask('Class 10 Science Chapter 1 ka important question batao Hindi me')" class="bg-[#2f2f2f] p-3 rounded-xl text-xs">📸 Photo se Important Q</button>
+<button onclick="ask('Newton ke law ko baccho jaise samjhao Hindi me')" class="bg-[#2f2f2f] p-3 rounded-xl text-xs">🧒 Baccho jaisa samjhao</button>
+<button onclick="ask('Class 12 Physics ka numerical step by step samjhao') " class="bg-[#2f2f2f] p-3 rounded-xl text-xs">🔢 Numerical Trick</button>
+<button onclick="ask('UP Board Class 10 ke liye 30 din me 85% ka plan banao')" class="bg-[#2f2f2f] p-3 rounded-xl text-xs">🎯 85%+ Plan</button>
+</div>
+</div>
+</div>
+
+<div class="p-3 bg-[#212121] border-t border-white/10">
+<div class="max-w-3xl mx-auto">
+<div id="imgPreview" class="hidden mb-2"><img id="previewImg" class="h-20 rounded-xl"><button onclick="removeImg()" class="ml-2 text-xs text-red-400">X hatao</button></div>
+<div class="bg-[#2f2f2f] rounded-[24px] p-2 flex items-center gap-2">
+<label class="w-9 h-9 rounded-full bg-[#212121] flex items-center justify-center cursor-pointer"><i class="fa-solid fa-image"></i><input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImage(this)"></label>
+<textarea id="userInput" rows="1" placeholder="Sawal pucho, photo bhejo ya bolo..." class="flex-1 bg-transparent outline-none p-2 text-[15px] resize-none max-h-28"></textarea>
+<button onclick="startVoice()" id="micBtn" class="w-9 h-9 rounded-full bg-[#212121] flex items-center justify-center"><i class="fa-solid fa-microphone"></i></button>
+<button onclick="sendMessage()" class="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center"><i class="fa-solid fa-arrow-up"></i></button>
+</div>
+<p class="text-[10px] text-center text-gray-500 mt-2">TopAI • Made by Ashish (17, UP) • 9-12 ke liye best</p>
+</div>
+</div>
+
+<div id="keyModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+<div class="bg-[#2f2f2f] p-6 rounded-2xl w-full max-w-sm">
+<h3 class="font-bold">🔑 API Key daalo (Last step)</h3>
+<p class="text-xs text-gray-400 mt-2">aistudio.google.com/app/apikey pe jao → Create API Key → Copy → Yahan paste</p>
+<input id="apiKeyInput" type="text" placeholder="AQ. se start hogi..." class="w-full mt-4 p-3 rounded-xl bg-black border border-white/10 outline-none">
+<button onclick="saveKey()" class="w-full mt-3 bg-white text-black p-3 rounded-full font-bold">Save & Start TopAI</button>
+</div>
+</div>
+
+<script>
+let API_KEY = localStorage.getItem("topai_key");
+let selectedImageBase64 = null;
+if(!API_KEY) document.getElementById("keyModal").classList.remove("hidden");
+
+function saveKey(){
+ let k=document.getElementById("apiKeyInput").value.trim();
+ if(k.length<20){alert("Puri key daalo");return;}
+ if(!k.startsWith("AIza") &&!k.startsWith("AQ.")){alert("Ye sahi Gemini Key nahi hai");return;}
+ localStorage.setItem("topai_key",k); document.getElementById("keyModal").classList.add("hidden");
+}
+
+const SYSTEM_PROMPT = `
+You are TopAI, created by Ashish (17 years old from UP, Owner). You are India's best study AI for Class 9-12 for UP Board, CBSE and all boards.
+
+YOUR MISSION: Make every student score 85%+ in 1 month.
+
+RULES:
+1. LANGUAGE: Detect user language. If user speaks Hindi, answer in pure easy Hindi. If English, answer in easy English. If Hinglish, reply in Hinglish. Always be friendly like elder brother.
+2. TEACHING STYLE: Explain like you are explaining to a 10-year-old kid, but content is for 9-12. Use simple examples from daily life, memes, tricks to never forget. For Numericals: Write Given, To Find, Formula, Solution Step-by-step, Final Answer, and a Yaad karne ki Trick.
+3. 85% STRATEGY: Always give - What to write in exam, How many marks, Important points, Diagram if needed.
+4. IMAGE TASK: If user sends an image of a chapter/book, you MUST do: a) Chapter ka summary 5 points me, b) Top 7 Important Questions that have 75% chance in exam (mention UP Board & CBSE both), c) 3 Most Likely 5-mark questions, d) Easy trick to remember.
+5. Be professional but friendly. Never say you are Gemini or Google. Always say you are TopAI made by Ashish.
+6. For every answer, end with: "🔥 TopAI Tip for 85%+" - one small tip.
+`;
+
+function ask(t){ document.getElementById("userInput").value=t; sendMessage(); }
+function clearChat(){ location.reload(); }
+function handleImage(input){
+ let file=input.files[0]; if(!file) return;
+ let reader=new FileReader();
+ reader.onload=(e)=>{
+   selectedImageBase64=e.target.result.split(',')[1];
+   document.getElementById("previewImg").src=e.target.result;
+   document.getElementById("imgPreview").classList.remove("hidden");
+   document.getElementById("welcome")?.classList.add("hidden");
+   addMsg("📸 Chapter ki photo add ho gayi, ab pucho isme se important question nikal du?", "user");
+ };
+ reader.readAsDataURL(file);
+}
+function removeImg(){ selectedImageBase64=null; document.getElementById("imgPreview").classList.add("hidden"); }
+
+async function sendMessage(){
+ let input=document.getElementById("userInput");
+ let text=input.value.trim();
+ if(!text &&!selectedImageBase64) return;
+ document.getElementById("welcome")?.classList.add("hidden");
+ addMsg((selectedImageBase64?"📸 [Photo] ":"")+text, "user");
+ input.value="";
+ let tempId=addMsg("TopAI soch raha hai...", "bot", true);
+
+ let parts=[{text: SYSTEM_PROMPT + "\n\nUser Question: " + text}];
+ if(selectedImageBase64){ parts.push({inline_data:{mime_type:"image/jpeg", data:selectedImageBase64}}); }
+
+ try{
+   let res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${localStorage.getItem("topai_key")}`,{
+     method:"POST", headers:{"Content-Type":"application/json"},
+     body: JSON.stringify({contents:[{parts:parts}]})
+   });
+   let data=await res.json();
+   document.getElementById(tempId)?.remove();
+   if(data.error){ addMsg("Error: "+data.error.message+" - Nayi key banao aistudio.google.com se", "bot"); return; }
+   addMsg(data.candidates[0].content.parts[0].text, "bot");
+   selectedImageBase64=null; document.getElementById("imgPreview").classList.add("hidden");
+ }catch(e){ document.getElementById(tempId)?.remove(); addMsg("Network error: "+e.message, "bot"); }
+}
+
+function addMsg(t, who, isTemp=false){
+ let div=document.createElement("div");
+ div.className=who==="user"? "bg-[#2f2f2f] p-3 rounded-2xl ml-auto max-w-[85%] mt-4 w-fit text-sm" : "bg-transparent border border-white/10 p-4 rounded-2xl mt-4 max-w-[98%] whitespace-pre-wrap leading-6 text-[14px]";
+ div.innerText=t;
+ if(isTemp){ let id="temp"+Date.now(); div.id=id; document.getElementById("chat").appendChild(div); return id; }
+ document.getElementById("chat").appendChild(div);
+ document.getElementById("chat").scrollTop=document.getElementById("chat").scrollHeight;
+}
+
+function startVoice(){
+ if(!('webkitSpeechRecognition' in window)){ alert("Chrome browser use karo voice ke liye"); return; }
+ let rec=new webkitSpeechRecognition(); rec.lang="hi-IN"; rec.start();
+ document.getElementById("micBtn").innerHTML='<i class="fa-solid fa-stop text-red-500"></i>';
+ rec.onresult=(e)=>{ document.getElementById("userInput").value=e.results[0][0].transcript; };
+ rec.onend=()=>{ document.getElementById("micBtn").innerHTML='<i class="fa-solid fa-microphone"></i>'; };
+}
+document.getElementById("userInput").addEventListener("keydown", e=>{ if(e.key==="Enter" &&!e.shiftKey){ e.preventDefault(); sendMessage(); }});
+</script>
+</body>
+  </html>
