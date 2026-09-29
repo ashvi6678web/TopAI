@@ -60,7 +60,7 @@ if(!API_KEY) document.getElementById("keyModal").classList.remove("hidden");
 function saveKey(){
  let k=document.getElementById("apiKeyInput").value.trim();
  if(k.length<20){alert("Puri key daalo");return;}
- if(!k.startsWith("AIza") &&!k.startsWith("AQ.")){alert("Ye sahi Gemini Key nahi hai");return;}
+ if(!k.startsWith("AIza")){
  localStorage.setItem("topai_key",k); document.getElementById("keyModal").classList.add("hidden");
 }
 
@@ -107,7 +107,7 @@ async function sendMessage(){
  if(selectedImageBase64){ parts.push({inline_data:{mime_type:"image/jpeg", data:selectedImageBase64}}); }
 
  try{
-   let res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${localStorage.getItem("topai_key")}`,{
+   .../v1beta/models/gemini-1.5-flash:generateContent?key=
      method:"POST", headers:{"Content-Type":"application/json"},
      body: JSON.stringify({contents:[{parts:parts}]})
    });
